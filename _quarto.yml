@@ -22,6 +22,8 @@ website:
             file: content/01_journal/03_data_wrangling.qmd
           - text: "04 Data Visualization"
             file: content/01_journal/04_data_visualization.qmd
+          - text: "tEst pAge"
+            file: content/01_journal/Test_Training.qmd
       - text: "Class notes"
         file: content/02_notes/05_class_notes.qmd
       - text: "Links"
