@@ -1,7 +1,8 @@
 ---
 title: "My Lab Journal"
 subtitle: "Business Data Science Basics"
-author: "Agam Safaruddin"
+author: "Agam Safaruddin / pass: ABCDE12345"
+password: "ABCDE12345" 
 ---
 
 ![](assets/logo/TIE_logo.svg){width="80%" fig-align="center"}
