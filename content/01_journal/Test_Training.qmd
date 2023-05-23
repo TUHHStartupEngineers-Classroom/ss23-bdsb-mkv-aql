@@ -54,10 +54,7 @@ R code chunks surrounded by ```s. These chunks can be customized with knitr opti
   + #| fig-cap: "..." adds a caption to graphical results.
 
 
----
-title: "Tidyverse"
-author: "Joschka Schwarz"
----
+
 
 ::: callout-note
 You can delete everything in here and start fresh.

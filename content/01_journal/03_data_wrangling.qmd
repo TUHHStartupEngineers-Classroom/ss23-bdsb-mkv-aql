@@ -4,5 +4,340 @@ author: "Agam Safaruddin"
 ---
 
 ::: callout-note
-You can delete everything in here and start fresh.
+Most of my notes of studying this chapter is done in 'r-data-wrangling.ipynb' (see workspace content). Just in case it is necessary to show it.
 :::
+
+# Requirements
+
+## Libraries
+
+Just simply get every library
+
+```{r}
+library(readxl)
+library(lubridate)
+library(tidyverse)
+library(readr)
+library(ggplot2)
+library(knitr)
+library(RSQLite)
+library(rvest)     # HTML Hacking & Web Scraping
+library(xopen)     # Quickly opening URLs
+library(jsonlite)  # converts JSON files to R objects
+library(glue)      # concatenate strings
+library(stringi)   # character string/text processing
+library(httr)
+library(stringr)
+library(data.table)
+library(vroom)
+```
+
+# Challenge 1
+
+-   using the reduced_patent_dataset
+-   Patents_DB_dictionary\_... .xlsx is the information about the data
+-   What US company or corporation has the most patents? List 10 US companies with the most assigned/granted patents
+
+## Data import
+
+### import from patent.tsv
+
+-   Creating a table, and then importing from .tsv into the table.
+-   \\ t is for tab-delimited files (.tsv). Seperating columns by their tabbed white spaces. (Import to excel to clearly see it)
+-   skip = 1 the first row, becuase they are just titles
+-   common column values's name are made the same, to match the data variables (eg: id)
+
+```{r}
+col_types <- list(
+  id = col_character(),
+    date = col_date("%Y-%m-%d"),
+    num_claims = col_double(),
+  type = col_character(),
+  number = col_character(),
+  country = col_character(),
+  
+  abstract = col_character(),
+  title = col_character(),
+  kind = col_character(),
+  
+  filename = col_character(),
+  withdrawn = col_double()
+)
+
+patent_tbl <- vroom(
+            file       = "Patent_data_reduced/Patent_data_reduced/patent.tsv", 
+            skip = 1,
+            delim      = "\t", 
+            col_names  = names(col_types),
+            col_types  = col_types,
+            na         = c("", "NA", "NULL")
+        )
+```
+
+### import from patent_assignee.tsv
+
+```{r}
+col_types_patent_assignee <- list(
+  id = col_character(),
+  assignee = col_character()
+)
+
+patent_assignee_tbl <- vroom(
+            file       = "Patent_data_reduced/Patent_data_reduced/patent_assignee.tsv", 
+            skip = 1,
+            delim      = "\t", 
+            col_names  = names(col_types_patent_assignee),
+            col_types  = col_types_patent_assignee,
+            na         = c("", "NA", "NULL")
+        )
+```
+
+### import from assignee.tsv
+
+```{r}
+col_types_assignee <- list(
+  assignee = col_character(),
+    type = col_character(),
+    organization = col_character()
+)
+
+assignee_tbl <- vroom(
+            file       = "Patent_data_reduced/Patent_data_reduced/assignee.tsv", 
+            skip = 1,
+            delim      = "\t", 
+            col_names  = names(col_types_assignee),
+            col_types  = col_types_assignee,
+            na         = c("", "NA", "NULL")
+        )
+
+```
+
+### import from uspc.tsv
+
+```{r}
+col_types_uspc <- list(
+  id = col_character(),
+    mainclass_id = col_character(),
+    sequence = col_double()
+)
+
+uspc_tbl <- vroom(
+            file       = "Patent_data_reduced/Patent_data_reduced/uspc.tsv", 
+            skip = 1,
+            delim      = "\t", 
+            col_names  = names(col_types_uspc),
+            col_types  = col_types_uspc,
+            na         = c("", "NA", "NULL")
+        )
+```
+
+## See results
+
+```{r}
+patent_tbl
+patent_assignee_tbl
+assignee_tbl
+uspc_tbl
+```
+
+## Convert to data.table
+
+```{r}
+# patent Data ----
+setDT(patent_tbl)
+
+class(patent_tbl)
+
+patent_tbl %>% glimpse()
+
+# patent-assignee Data ----
+setDT(patent_assignee_tbl)
+
+patent_assignee_tbl %>% glimpse()
+
+# assignee Data ----
+setDT(assignee_tbl)
+assignee_tbl %>% glimpse()
+
+# uspc Data
+setDT(uspc_tbl)
+uspc_tbl %>% glimpse()
+```
+
+## Data wrangling
+
+-   combine by id
+-   all.x = TRUE: all rows included
+-   all.y = FALSE: only mathcing rows will be combined to x
+-   uspc has the most id rows
+-   patent has the 2nd most id rows
+-   patent-assignee 3rd
+-   assignee 4th least rows
+
+```{r}
+combined_data_patent_1 <- merge(x = uspc_tbl, y = patent_tbl, 
+                       by    = "id", 
+                       all.x = TRUE, 
+                       all.y = FALSE)
+
+
+combined_data_patent_1 %>% glimpse()
+```
+
+```{r}
+combined_data_patent_2 <- merge(x = combined_data_patent_1, y = patent_assignee_tbl, 
+                       by    = "id", 
+                       all.x = TRUE, 
+                       all.y = FALSE)
+
+
+combined_data_patent_2 %>% glimpse()
+```
+
+```{r}
+combined_data_patent_3 <- merge(x = combined_data_patent_2, y = assignee_tbl, 
+                       by    = "assignee", 
+                       all.x = TRUE, 
+                       all.y = FALSE)
+
+
+combined_data_patent_3 %>% glimpse()
+```
+
+## Data filtering
+
+-   Picking only the US companies using grepl()
+
+-   "Inc." (Incorporated), "Corp." (Corporation), "LLC" (Limited Liability Company), or "Co." (Company).
+
+-   ignoring "Co., Ltd.", because those are typical eastern asian companies
+
+-   OR Use type = 2, it means US companies
+
+```{r}
+#US_combined_data_patent <- combined_data_patent_3[grepl("Inc\\.|Corp\\.|LLC|Co\\.", organization) & !grepl("Co\\., Ltd\\.", organization)] 
+US_combined_data_patent <- combined_data_patent_3[grepl(2, type)]
+```
+
+## Calculation
+
+-   Count how many times a name appeared, to see how many patents they each have. And reorder row.
+
+```{r}
+number_of_patents_owned <- US_combined_data_patent[, .N, by = organization]
+setnames(number_of_patents_owned, "N", "number_of_patents_owned")
+
+number_of_patents_owned
+
+#setorderv(number_of_patents_owned, c("number_of_patents_owned", "organization"))
+#setorderv(number_of_patents_owned, -(number_of_patents_owned))
+US_combined_data_patent_descending = number_of_patents_owned %>% arrange(desc(number_of_patents_owned))
+```
+
+## Plot readable table
+
+```{r}
+kable(head(US_combined_data_patent_descending, n = 10))
+```
+
+# Challenge 2
+
+-   US companies with most patents gained in August 2014
+
+## Picking out only Aug 2014
+
+```{r}
+#month = month(date)
+US_combined_data_patent_Aug_2014 = US_combined_data_patent[format(date, "%Y-%m") %like% "2014-08"]
+US_combined_data_patent_Aug_2014
+```
+
+## Calculation
+
+-   Count how many times a name appeared, to see how many patents they each have. And reorder row
+
+```{r}
+number_of_patents_owned_aug_2014 <- US_combined_data_patent_Aug_2014[, .N, by = organization]
+setnames(number_of_patents_owned_aug_2014, "N", "number_of_patents_owned_aug_2014")
+
+number_of_patents_owned_aug_2014
+
+#setorderv(number_of_patents_owned, c("number_of_patents_owned", "organization"))
+#setorderv(number_of_patents_owned, -(number_of_patents_owned))
+US_combined_data_patent_descending_aug_2014 = number_of_patents_owned_aug_2014 %>% arrange(desc(number_of_patents_owned_aug_2014))
+```
+
+## Plot readable table
+
+```{r}
+kable(head(US_combined_data_patent_descending_aug_2014, n = 10))
+```
+
+# Challenge 3
+
+-   What is the most innovative tech sector (mainclass_id \> 300) https://www.uspto.gov/sites/default/files/documents/caau.pdf, but mainclass_id is type character
+-   Top 10 companies worldwide
+-   Top 5 USPTO tech main classes
+
+## Top 10 companies worldwide
+
+### Get data with above 300 mainclass_id
+
+```{r}
+#combined_data_patent_tech <- combined_data_patent_3[grepl(>300, mainclass_id)]
+
+#above_300 = combined_data_patent_3$mainclass_id > 300
+
+#mainclass_id_num = as.numeric(combined_data_patent_3$mainclass_id)
+above_300 = 300
+
+combined_data_patent_tech = combined_data_patent_3[grepl("^\\d+$", mainclass_id) & as.numeric(mainclass_id) > above_300]
+combined_data_patent_tech
+```
+
+### Calculation
+
+-   Count how many times a name appeared, to see how many patents they each have. And reorder row
+
+```{r}
+number_of_patents_owned_tech_worldwide <- combined_data_patent_tech[, .N, by = organization]
+setnames(number_of_patents_owned_tech_worldwide, "N", "number_of_patents_owned_tech_worldwide")
+
+number_of_patents_owned_tech_worldwide = number_of_patents_owned_tech_worldwide[organization != "NA"]
+number_of_patents_owned_tech_worldwide
+
+#setorderv(number_of_patents_owned, c("number_of_patents_owned", "organization"))
+#setorderv(number_of_patents_owned, -(number_of_patents_owned))
+number_of_patents_owned_tech_worldwide_descending = number_of_patents_owned_tech_worldwide %>% arrange(desc(number_of_patents_owned_tech_worldwide))
+```
+
+### Plot readable table
+
+```{r}
+kable(head(number_of_patents_owned_tech_worldwide_descending, n = 10))
+```
+
+## Top 5 USPTO tech main classes
+
+```{r}
+US_combined_data_patent_tech = combined_data_patent_tech[grepl(2, type)]
+US_combined_data_patent_tech
+```
+
+### Organizing
+
+```{r}
+Top_USPTO = US_combined_data_patent_tech %>% arrange(desc(sequence))
+```
+
+```{r}
+Top_USPTO_1 = Top_USPTO[, organization := as.character(organization)]
+Top_USPTO_2 = Top_USPTO[, .(sequence = max(sequence)), by = organization]
+Top_USPTO_2
+```
+
+### Plot readable table
+
+```{r}
+kable(head(Top_USPTO_2, n = 5))
+```

@@ -109,7 +109,98 @@
     "href": "content/01_journal/03_data_wrangling.html",
     "title": "Data Wrangling",
     "section": "",
-    "text": "Note\n\n\n\nYou can delete everything in here and start fresh."
+    "text": "Note\n\n\n\nMost of my notes of studying this chapter is done in ‘r-data-wrangling.ipynb’ (see workspace content). Just in case it is necessary to show it."
+  },
+  {
+    "objectID": "content/01_journal/03_data_wrangling.html#libraries",
+    "href": "content/01_journal/03_data_wrangling.html#libraries",
+    "title": "Data Wrangling",
+    "section": "1.1 Libraries",
+    "text": "1.1 Libraries\nJust simply get every library\n\nlibrary(readxl)\nlibrary(lubridate)\n\n#&gt; \n#&gt; Attache Paket: 'lubridate'\n\n\n#&gt; Die folgenden Objekte sind maskiert von 'package:base':\n#&gt; \n#&gt;     date, intersect, setdiff, union\n\nlibrary(tidyverse)\n\n#&gt; ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──\n\n\n#&gt; ✔ ggplot2 3.3.5     ✔ purrr   0.3.4\n#&gt; ✔ tibble  3.1.6     ✔ dplyr   1.0.8\n#&gt; ✔ tidyr   1.2.0     ✔ stringr 1.4.0\n#&gt; ✔ readr   2.1.2     ✔ forcats 0.5.1\n\n\n#&gt; ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n#&gt; ✖ lubridate::as.difftime() masks base::as.difftime()\n#&gt; ✖ lubridate::date()        masks base::date()\n#&gt; ✖ dplyr::filter()          masks stats::filter()\n#&gt; ✖ lubridate::intersect()   masks base::intersect()\n#&gt; ✖ dplyr::lag()             masks stats::lag()\n#&gt; ✖ lubridate::setdiff()     masks base::setdiff()\n#&gt; ✖ lubridate::union()       masks base::union()\n\nlibrary(readr)\nlibrary(ggplot2)\nlibrary(knitr)\nlibrary(RSQLite)\n\n#&gt; Warning: Paket 'RSQLite' wurde unter R Version 4.2.3 erstellt\n\nlibrary(rvest)     # HTML Hacking & Web Scraping\n\n#&gt; \n#&gt; Attache Paket: 'rvest'\n\n\n#&gt; Das folgende Objekt ist maskiert 'package:readr':\n#&gt; \n#&gt;     guess_encoding\n\nlibrary(xopen)     # Quickly opening URLs\n\n#&gt; Warning: Paket 'xopen' wurde unter R Version 4.2.3 erstellt\n\nlibrary(jsonlite)  # converts JSON files to R objects\n\n#&gt; \n#&gt; Attache Paket: 'jsonlite'\n\n\n#&gt; Das folgende Objekt ist maskiert 'package:purrr':\n#&gt; \n#&gt;     flatten\n\nlibrary(glue)      # concatenate strings\nlibrary(stringi)   # character string/text processing\nlibrary(httr)\nlibrary(stringr)\nlibrary(data.table)\n\n#&gt; \n#&gt; Attache Paket: 'data.table'\n\n\n#&gt; Die folgenden Objekte sind maskiert von 'package:dplyr':\n#&gt; \n#&gt;     between, first, last\n\n\n#&gt; Das folgende Objekt ist maskiert 'package:purrr':\n#&gt; \n#&gt;     transpose\n\n\n#&gt; Die folgenden Objekte sind maskiert von 'package:lubridate':\n#&gt; \n#&gt;     hour, isoweek, mday, minute, month, quarter, second, wday, week,\n#&gt;     yday, year\n\nlibrary(vroom)"
+  },
+  {
+    "objectID": "content/01_journal/03_data_wrangling.html#data-import",
+    "href": "content/01_journal/03_data_wrangling.html#data-import",
+    "title": "Data Wrangling",
+    "section": "2.1 Data import",
+    "text": "2.1 Data import\n\nimport from patent.tsv\n\nCreating a table, and then importing from .tsv into the table.\n\\ t is for tab-delimited files (.tsv). Seperating columns by their tabbed white spaces. (Import to excel to clearly see it)\nskip = 1 the first row, becuase they are just titles\ncommon column values’s name are made the same, to match the data variables (eg: id)\n\n\ncol_types &lt;- list(\n  id = col_character(),\n    date = col_date(\"%Y-%m-%d\"),\n    num_claims = col_double(),\n  type = col_character(),\n  number = col_character(),\n  country = col_character(),\n  \n  abstract = col_character(),\n  title = col_character(),\n  kind = col_character(),\n  \n  filename = col_character(),\n  withdrawn = col_double()\n)\n\npatent_tbl &lt;- vroom(\n            file       = \"Patent_data_reduced/Patent_data_reduced/patent.tsv\", \n            skip = 1,\n            delim      = \"\\t\", \n            col_names  = names(col_types),\n            col_types  = col_types,\n            na         = c(\"\", \"NA\", \"NULL\")\n        )\n\n\n\nimport from patent_assignee.tsv\n\ncol_types_patent_assignee &lt;- list(\n  id = col_character(),\n  assignee = col_character()\n)\n\npatent_assignee_tbl &lt;- vroom(\n            file       = \"Patent_data_reduced/Patent_data_reduced/patent_assignee.tsv\", \n            skip = 1,\n            delim      = \"\\t\", \n            col_names  = names(col_types_patent_assignee),\n            col_types  = col_types_patent_assignee,\n            na         = c(\"\", \"NA\", \"NULL\")\n        )\n\n\n\nimport from assignee.tsv\n\ncol_types_assignee &lt;- list(\n  assignee = col_character(),\n    type = col_character(),\n    organization = col_character()\n)\n\nassignee_tbl &lt;- vroom(\n            file       = \"Patent_data_reduced/Patent_data_reduced/assignee.tsv\", \n            skip = 1,\n            delim      = \"\\t\", \n            col_names  = names(col_types_assignee),\n            col_types  = col_types_assignee,\n            na         = c(\"\", \"NA\", \"NULL\")\n        )\n\n\n\nimport from uspc.tsv\n\ncol_types_uspc &lt;- list(\n  id = col_character(),\n    mainclass_id = col_character(),\n    sequence = col_double()\n)\n\nuspc_tbl &lt;- vroom(\n            file       = \"Patent_data_reduced/Patent_data_reduced/uspc.tsv\", \n            skip = 1,\n            delim      = \"\\t\", \n            col_names  = names(col_types_uspc),\n            col_types  = col_types_uspc,\n            na         = c(\"\", \"NA\", \"NULL\")\n        )"
+  },
+  {
+    "objectID": "content/01_journal/03_data_wrangling.html#see-results",
+    "href": "content/01_journal/03_data_wrangling.html#see-results",
+    "title": "Data Wrangling",
+    "section": "2.2 See results",
+    "text": "2.2 See results\n\npatent_tbl\n\n\n\n  \n\n\npatent_assignee_tbl\n\n\n\n  \n\n\nassignee_tbl\n\n\n\n  \n\n\nuspc_tbl"
+  },
+  {
+    "objectID": "content/01_journal/03_data_wrangling.html#convert-to-data.table",
+    "href": "content/01_journal/03_data_wrangling.html#convert-to-data.table",
+    "title": "Data Wrangling",
+    "section": "2.3 Convert to data.table",
+    "text": "2.3 Convert to data.table\n\n# patent Data ----\nsetDT(patent_tbl)\n\nclass(patent_tbl)\n\n#&gt; [1] \"data.table\" \"data.frame\"\n\npatent_tbl %&gt;% glimpse()\n\n#&gt; Rows: 327,014\n#&gt; Columns: 3\n#&gt; $ id         &lt;chr&gt; \"8621662\", \"8621663\", \"8621664\", \"8621665\", \"8621666\", \"862…\n#&gt; $ date       &lt;date&gt; 2014-01-07, 2014-01-07, 2014-01-07, 2014-01-07, 2014-01-07…\n#&gt; $ num_claims &lt;dbl&gt; 11, 6, 10, 18, 7, 9, 21, 19, 8, 18, 7, 15, 15, 15, 18, 7, 1…\n\n# patent-assignee Data ----\nsetDT(patent_assignee_tbl)\n\npatent_assignee_tbl %&gt;% glimpse()\n\n#&gt; Rows: 315,910\n#&gt; Columns: 2\n#&gt; $ id       &lt;chr&gt; \"8709412\", \"8636251\", \"8899346\", \"8700141\", \"8724986\", \"D6998…\n#&gt; $ assignee &lt;chr&gt; \"org_MPhnVOTFsXybN0auC647\", \"org_v7VisXnmZZEEUMeHhW6y\", \"org_…\n\n# assignee Data ----\nsetDT(assignee_tbl)\nassignee_tbl %&gt;% glimpse()\n\n#&gt; Rows: 47,011\n#&gt; Columns: 3\n#&gt; $ assignee     &lt;chr&gt; \"org_004j997jM9yEdS7z4ReD\", \"org_005hVGA5JMOZsS0xOhGa\", \"…\n#&gt; $ type         &lt;chr&gt; \"3\", \"3\", \"2\", \"2\", \"3\", \"3\", \"2\", \"3\", \"2\", \"3\", \"2\", \"2…\n#&gt; $ organization &lt;chr&gt; \"University of Basel\", \"Zetkama Spólka Akcyjna\", \"Mirabil…\n\n# uspc Data\nsetDT(uspc_tbl)\nuspc_tbl %&gt;% glimpse()\n\n#&gt; Rows: 815,743\n#&gt; Columns: 3\n#&gt; $ id           &lt;chr&gt; \"8829273\", \"8623780\", \"8904894\", \"8794165\", \"8773920\", \"8…\n#&gt; $ mainclass_id &lt;chr&gt; \"435\", \"502\", \"368\", \"111\", \"365\", \"128\", \"709\", \"707\", \"…\n#&gt; $ sequence     &lt;dbl&gt; 7, 2, 0, 1, 0, 4, 2, 1, 2, 2, 10, 1, 2, 4, 1, 1, 9, 0, 2,…"
+  },
+  {
+    "objectID": "content/01_journal/03_data_wrangling.html#data-wrangling",
+    "href": "content/01_journal/03_data_wrangling.html#data-wrangling",
+    "title": "Data Wrangling",
+    "section": "2.4 Data wrangling",
+    "text": "2.4 Data wrangling\n\ncombine by id\nall.x = TRUE: all rows included\nall.y = FALSE: only mathcing rows will be combined to x\nuspc has the most id rows\npatent has the 2nd most id rows\npatent-assignee 3rd\nassignee 4th least rows\n\n\ncombined_data_patent_1 &lt;- merge(x = uspc_tbl, y = patent_tbl, \n                       by    = \"id\", \n                       all.x = TRUE, \n                       all.y = FALSE)\n\n\ncombined_data_patent_1 %&gt;% glimpse()\n\n#&gt; Rows: 815,743\n#&gt; Columns: 5\n#&gt; $ id           &lt;chr&gt; \"8621662\", \"8621663\", \"8621663\", \"8621664\", \"8621664\", \"8…\n#&gt; $ mainclass_id &lt;chr&gt; \"2\", \"2\", \"351\", \"2\", \"2\", \"2\", \"2\", \"2\", \"2\", \"2\", \"2\", …\n#&gt; $ sequence     &lt;dbl&gt; 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 3, 2, 4, 0, 2, 1, 3, 0, …\n#&gt; $ date         &lt;date&gt; 2014-01-07, 2014-01-07, 2014-01-07, 2014-01-07, 2014-01-…\n#&gt; $ num_claims   &lt;dbl&gt; 11, 6, 6, 10, 10, 18, 7, 7, 9, 21, 21, 21, 21, 21, 19, 19…\n\n\n\ncombined_data_patent_2 &lt;- merge(x = combined_data_patent_1, y = patent_assignee_tbl, \n                       by    = \"id\", \n                       all.x = TRUE, \n                       all.y = FALSE)\n\n\ncombined_data_patent_2 %&gt;% glimpse()\n\n#&gt; Rows: 848,347\n#&gt; Columns: 6\n#&gt; $ id           &lt;chr&gt; \"8621662\", \"8621663\", \"8621663\", \"8621664\", \"8621664\", \"8…\n#&gt; $ mainclass_id &lt;chr&gt; \"2\", \"2\", \"351\", \"2\", \"2\", \"2\", \"2\", \"2\", \"2\", \"2\", \"2\", …\n#&gt; $ sequence     &lt;dbl&gt; 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 3, 2, 4, 0, 2, 1, 3, 0, …\n#&gt; $ date         &lt;date&gt; 2014-01-07, 2014-01-07, 2014-01-07, 2014-01-07, 2014-01-…\n#&gt; $ num_claims   &lt;dbl&gt; 11, 6, 6, 10, 10, 18, 7, 7, 9, 21, 21, 21, 21, 21, 19, 19…\n#&gt; $ assignee     &lt;chr&gt; \"org_aTMUEAbUvQuADfnSfudQ\", \"org_FfZ2sonhh4RvKY8vYp2B\", \"…\n\n\n\ncombined_data_patent_3 &lt;- merge(x = combined_data_patent_2, y = assignee_tbl, \n                       by    = \"assignee\", \n                       all.x = TRUE, \n                       all.y = FALSE)\n\n\ncombined_data_patent_3 %&gt;% glimpse()\n\n#&gt; Rows: 848,347\n#&gt; Columns: 8\n#&gt; $ assignee     &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N…\n#&gt; $ id           &lt;chr&gt; \"8621664\", \"8621664\", \"8621665\", \"8621667\", \"8621672\", \"8…\n#&gt; $ mainclass_id &lt;chr&gt; \"2\", \"2\", \"2\", \"2\", \"2\", \"2\", \"2\", \"2\", \"2\", \"2\", \"15\", \"…\n#&gt; $ sequence     &lt;dbl&gt; 0, 1, 0, 0, 0, 4, 1, 3, 2, 0, 0, 2, 1, 0, 1, 0, 1, 0, 2, …\n#&gt; $ date         &lt;date&gt; 2014-01-07, 2014-01-07, 2014-01-07, 2014-01-07, 2014-01-…\n#&gt; $ num_claims   &lt;dbl&gt; 10, 10, 18, 9, 7, 15, 15, 15, 15, 15, 1, 19, 19, 19, 18, …\n#&gt; $ type         &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N…\n#&gt; $ organization &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N…"
+  },
+  {
+    "objectID": "content/01_journal/03_data_wrangling.html#data-filtering",
+    "href": "content/01_journal/03_data_wrangling.html#data-filtering",
+    "title": "Data Wrangling",
+    "section": "2.5 Data filtering",
+    "text": "2.5 Data filtering\n\nPicking only the US companies using grepl()\n“Inc.” (Incorporated), “Corp.” (Corporation), “LLC” (Limited Liability Company), or “Co.” (Company).\nignoring “Co., Ltd.”, because those are typical eastern asian companies\nOR Use type = 2, it means US companies\n\n\n#US_combined_data_patent &lt;- combined_data_patent_3[grepl(\"Inc\\\\.|Corp\\\\.|LLC|Co\\\\.\", organization) & !grepl(\"Co\\\\., Ltd\\\\.\", organization)] \nUS_combined_data_patent &lt;- combined_data_patent_3[grepl(2, type)]"
+  },
+  {
+    "objectID": "content/01_journal/03_data_wrangling.html#calculation",
+    "href": "content/01_journal/03_data_wrangling.html#calculation",
+    "title": "Data Wrangling",
+    "section": "2.6 Calculation",
+    "text": "2.6 Calculation\n\nCount how many times a name appeared, to see how many patents they each have. And reorder row.\n\n\nnumber_of_patents_owned &lt;- US_combined_data_patent[, .N, by = organization]\nsetnames(number_of_patents_owned, \"N\", \"number_of_patents_owned\")\n\nnumber_of_patents_owned\n\n\n\n  \n\n\n#setorderv(number_of_patents_owned, c(\"number_of_patents_owned\", \"organization\"))\n#setorderv(number_of_patents_owned, -(number_of_patents_owned))\nUS_combined_data_patent_descending = number_of_patents_owned %&gt;% arrange(desc(number_of_patents_owned))"
+  },
+  {
+    "objectID": "content/01_journal/03_data_wrangling.html#plot-readable-table",
+    "href": "content/01_journal/03_data_wrangling.html#plot-readable-table",
+    "title": "Data Wrangling",
+    "section": "2.7 Plot readable table",
+    "text": "2.7 Plot readable table\n\nkable(head(US_combined_data_patent_descending, n = 10))\n\n\n\n\norganization\nnumber_of_patents_owned\n\n\n\n\nInternational Business Machines Corporation\n19056\n\n\nQUALCOMM Incorporated\n7322\n\n\nMicrosoft Corporation\n7195\n\n\nGoogle Inc.\n6082\n\n\nApple Inc.\n5542\n\n\nAT&T INTELLECTUAL PROPERTY I, L.P.\n5010\n\n\nGeneral Electric Company\n4646\n\n\nIntel Corporation\n4252\n\n\nGM Global Technology Operations LLC\n3920\n\n\nBroadcom Corporation\n3736"
+  },
+  {
+    "objectID": "content/01_journal/03_data_wrangling.html#picking-out-only-aug-2014",
+    "href": "content/01_journal/03_data_wrangling.html#picking-out-only-aug-2014",
+    "title": "Data Wrangling",
+    "section": "3.1 Picking out only Aug 2014",
+    "text": "3.1 Picking out only Aug 2014\n\n#month = month(date)\nUS_combined_data_patent_Aug_2014 = US_combined_data_patent[format(date, \"%Y-%m\") %like% \"2014-08\"]\nUS_combined_data_patent_Aug_2014"
+  },
+  {
+    "objectID": "content/01_journal/03_data_wrangling.html#calculation-1",
+    "href": "content/01_journal/03_data_wrangling.html#calculation-1",
+    "title": "Data Wrangling",
+    "section": "3.2 Calculation",
+    "text": "3.2 Calculation\n\nCount how many times a name appeared, to see how many patents they each have. And reorder row\n\n\nnumber_of_patents_owned_aug_2014 &lt;- US_combined_data_patent_Aug_2014[, .N, by = organization]\nsetnames(number_of_patents_owned_aug_2014, \"N\", \"number_of_patents_owned_aug_2014\")\n\nnumber_of_patents_owned_aug_2014\n\n\n\n  \n\n\n#setorderv(number_of_patents_owned, c(\"number_of_patents_owned\", \"organization\"))\n#setorderv(number_of_patents_owned, -(number_of_patents_owned))\nUS_combined_data_patent_descending_aug_2014 = number_of_patents_owned_aug_2014 %&gt;% arrange(desc(number_of_patents_owned_aug_2014))"
+  },
+  {
+    "objectID": "content/01_journal/03_data_wrangling.html#plot-readable-table-1",
+    "href": "content/01_journal/03_data_wrangling.html#plot-readable-table-1",
+    "title": "Data Wrangling",
+    "section": "3.3 Plot readable table",
+    "text": "3.3 Plot readable table\n\nkable(head(US_combined_data_patent_descending_aug_2014, n = 10))\n\n\n\n\n\n\n\n\norganization\nnumber_of_patents_owned_aug_2014\n\n\n\n\nInternational Business Machines Corporation\n1810\n\n\nMicrosoft Corporation\n779\n\n\nQUALCOMM Incorporated\n591\n\n\nGoogle Inc.\n566\n\n\nApple Inc.\n501\n\n\nIntel Corporation\n404\n\n\nAT&T INTELLECTUAL PROPERTY I, L.P.\n401\n\n\nBroadcom Corporation\n353\n\n\nGeneral Electric Company\n345\n\n\nHewlett-Packard Development Company, L.P.\n341"
+  },
+  {
+    "objectID": "content/01_journal/03_data_wrangling.html#top-10-companies-worldwide",
+    "href": "content/01_journal/03_data_wrangling.html#top-10-companies-worldwide",
+    "title": "Data Wrangling",
+    "section": "4.1 Top 10 companies worldwide",
+    "text": "4.1 Top 10 companies worldwide\n\nGet data with above 300 mainclass_id\n\n#combined_data_patent_tech &lt;- combined_data_patent_3[grepl(&gt;300, mainclass_id)]\n\n#above_300 = combined_data_patent_3$mainclass_id &gt; 300\n\n#mainclass_id_num = as.numeric(combined_data_patent_3$mainclass_id)\nabove_300 = 300\n\ncombined_data_patent_tech = combined_data_patent_3[grepl(\"^\\\\d+$\", mainclass_id) & as.numeric(mainclass_id) &gt; above_300]\n\n#&gt; Warning in eval(.massagei(isub), x, ienv): NAs durch Umwandlung erzeugt\n\ncombined_data_patent_tech\n\n\n\n  \n\n\n\n\n\nCalculation\n\nCount how many times a name appeared, to see how many patents they each have. And reorder row\n\n\nnumber_of_patents_owned_tech_worldwide &lt;- combined_data_patent_tech[, .N, by = organization]\nsetnames(number_of_patents_owned_tech_worldwide, \"N\", \"number_of_patents_owned_tech_worldwide\")\n\nnumber_of_patents_owned_tech_worldwide = number_of_patents_owned_tech_worldwide[organization != \"NA\"]\nnumber_of_patents_owned_tech_worldwide\n\n\n\n  \n\n\n#setorderv(number_of_patents_owned, c(\"number_of_patents_owned\", \"organization\"))\n#setorderv(number_of_patents_owned, -(number_of_patents_owned))\nnumber_of_patents_owned_tech_worldwide_descending = number_of_patents_owned_tech_worldwide %&gt;% arrange(desc(number_of_patents_owned_tech_worldwide))\n\n\n\nPlot readable table\n\nkable(head(number_of_patents_owned_tech_worldwide_descending, n = 10))\n\n\n\n\n\n\n\n\norganization\nnumber_of_patents_owned_tech_worldwide\n\n\n\n\nInternational Business Machines Corporation\n15948\n\n\nSamsung Electronics Co., Ltd.\n11469\n\n\nCanon Kabushiki Kaisha\n8291\n\n\nSony Corporation\n7403\n\n\nQUALCOMM Incorporated\n7098\n\n\nMicrosoft Corporation\n7077\n\n\nGoogle Inc.\n5908\n\n\nApple Inc.\n5125\n\n\nAT&T INTELLECTUAL PROPERTY I, L.P.\n4985\n\n\nLG Electronics Inc.\n4854"
+  },
+  {
+    "objectID": "content/01_journal/03_data_wrangling.html#top-5-uspto-tech-main-classes",
+    "href": "content/01_journal/03_data_wrangling.html#top-5-uspto-tech-main-classes",
+    "title": "Data Wrangling",
+    "section": "4.2 Top 5 USPTO tech main classes",
+    "text": "4.2 Top 5 USPTO tech main classes\n\nUS_combined_data_patent_tech = combined_data_patent_tech[grepl(2, type)]\nUS_combined_data_patent_tech\n\n\n\n  \n\n\n\n\nOrganizing\n\nTop_USPTO = US_combined_data_patent_tech %&gt;% arrange(desc(sequence))\n\n\nTop_USPTO_1 = Top_USPTO[, organization := as.character(organization)]\nTop_USPTO_2 = Top_USPTO[, .(sequence = max(sequence)), by = organization]\nTop_USPTO_2\n\n\n\n  \n\n\n\n\n\nPlot readable table\n\nkable(head(Top_USPTO_2, n = 5))\n\n\n\n\norganization\nsequence\n\n\n\n\nAT&T INTELLECTUAL PROPERTY I, L.P.\n77\n\n\nApple Inc.\n62\n\n\nAlverix, Inc.\n61\n\n\nSONY NETWORK ENTERTAINMENT INTERNATIONAL LLC\n60\n\n\nSony Electronics Inc.\n58"
   },
   {
     "objectID": "content/01_journal/04_data_visualization.html",
@@ -121,14 +212,14 @@
   {
     "objectID": "content/01_journal/Test_Training.html",
     "href": "content/01_journal/Test_Training.html",
-    "title": "Tidyverse",
+    "title": "Test page",
     "section": "",
     "text": "Note\n\n\n\nNotes go here ödnajkwdnöjanjlnald\nWith eval: false\nnumbers &lt;- 1:1000\n\n# This will print the first 10 elements of the vector numbers\nnumbers[1:10]\n\n# This will plot a histogram of 100 random elements of the vector numbers\nhist(sample(numbers, 100, replace = T))\nrandom calculate and print\na=5\nb=4\nc=a+b\nprint(paste0(c))\n\n#&gt; [1] \"9\"\nwith eval: true\nnumbers &lt;- 1:1000\n\n# This will print the first 10 elements of the vector numbers\nnumbers[1:10]\n\n#&gt;  [1]  1  2  3  4  5  6  7  8  9 10\n\n# This will plot a histogram of 100 random elements of the vector numbers\nhist(sample(numbers, 100, replace = T))\nThis is a .qmd file. It is plain text with special features. Any time you write just like this, it will be compiled to normal text in the website. If you put a # in front of your text, it will create a top level-header.\nTo learn more about Quarto websites visit https://quarto.org/docs/websites."
   },
   {
     "objectID": "content/01_journal/Test_Training.html#header-2",
     "href": "content/01_journal/Test_Training.html#header-2",
-    "title": "Tidyverse",
+    "title": "Test page",
     "section": "2.1 Header 2",
     "text": "2.1 Header 2\n\nHeader 3\n\nHeader 4\n\nHeader 5\n\nHeader 6"
   },
