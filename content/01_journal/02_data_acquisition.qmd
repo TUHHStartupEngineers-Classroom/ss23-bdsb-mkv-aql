@@ -1,8 +1,203 @@
 ---
 title: "Data Acquisition"
-author: "Joschka Schwarz"
+author: "Agam Safaruddin"
 ---
 
 ::: callout-note
-You can delete everything in here and start fresh.
+Most of my notes of studying this chapter is done in 'r-data-acquisition.ipynb' (see workspace content). Just in case it is necessary to show it.
 :::
+
+# Requirements
+
+## Libraries
+
+Just simply get every library
+
+```{r}
+library(readxl)
+library(lubridate)
+library(tidyverse)
+library(readr)
+library(ggplot2)
+library(knitr)
+library(RSQLite)
+library(rvest)     # HTML Hacking & Web Scraping
+library(xopen)     # Quickly opening URLs
+library(jsonlite)  # converts JSON files to R objects
+library(glue)      # concatenate strings
+library(stringi)   # character string/text processing
+library(httr)
+library(stringr)
+```
+
+# Challenge 1
+
+1.  Get data via API (any website)
+    1.  In this case: universities in Germany (source: https://apipheny.io/free-api/)
+2.  Create a table and plot information
+
+## Get a free API
+
+```{r}
+api_url = "http://universities.hipolabs.com/search?country=germany"
+```
+
+## Import data
+
+```{r}
+response = GET(api_url)
+data = content(response, as = "text")
+data_list = fromJSON(data)
+```
+
+## Examine
+
+```{r}
+tibble(data_list)
+```
+
+## Cleaning Data
+
+### Change every "-" to "\_"
+
+```{r}
+cleaner_data_list = tibble(data_list) %>% 
+    dplyr::select(everything()) %>%
+    set_names(names(.) %>% str_replace_all("\\-", "_")) %>% 
+    dplyr::mutate(name = gsub("-", " ", name))
+```
+
+### See result
+
+```{r}
+cleaner_data_list
+```
+
+### Delete unecesarry columns and reduce row to 20, because there is too much, then see result
+
+```{r}
+smaller_cleaner_data_list = head(cleaner_data_list, n= 20) %>% 
+    dplyr::select(-(alpha_two_code), -(state_province))
+
+smaller_cleaner_data_list
+```
+
+### Count the number of words in the name column
+
+```{r}
+#word_counts <- str_count(data_list$name, "\\S+")
+#word_counts = sapply(data_list$name, function(name) length(strsplit(name, "[\\s-]+")[[1]]))
+
+word_counts = sapply(smaller_cleaner_data_list$name, function(name) str_count(name, "\\S+"))
+```
+
+### Insert result into table
+
+```{r}
+smaller_cleaner_data_list$simple_name = word_counts
+```
+
+### See current result
+
+```{r}
+tibble(smaller_cleaner_data_list)
+```
+
+## Plot readable table
+
+```{r}
+simplicity_of_name = smaller_cleaner_data_list %>%
+    dplyr::select(name, simple_name)
+
+kable(simplicity_of_name)
+```
+
+```{r}
+dev.new(width = 750, height = 530, unit = "px")
+plot(1:15)
+```
+
+## Plot graph
+
+::: callout-note
+The graph plotting works fine in other notebook platforms, but in RStudio it seems very squished. Therefore the original image is attached below after the code's plot.
+:::
+
+```{r}
+simplicity_of_name %>%
+
+    # Setup canvas with the columns year (x-axis) and sales (y-axis)
+    ggplot(aes(x = name, y = simple_name)) +
+
+    # Geometries
+    geom_col(fill = "#2DC6D6") + # Use geom_col for a bar plot
+    geom_label(aes(label = simple_name)) + # Adding labels to the bars
+
+    # Formatting
+    # scale_y_continuous(labels = scales::dollar) + # Change the y-axis. 
+    # Again, we have to adjust it for euro values
+    theme(axis.text.x = element_text(angle = 30, hjust = 1)) +
+
+    labs(
+        title    = "Simplicity of university names",
+        subtitle = "Less is simpler",
+        x = "", # Override defaults for x and y
+        y = "Complexity of names"
+    )
+```
+
+![Original plot](../../assets/img/Data-acquisition-challenge1-plot.jpg)
+
+# Challenge 2
+
+-   Scrape 1 canyon's competitor: https://www.rosebikes.de/ or https://www.radon-bikes.de
+-   create a small database:
+    -   model names
+    -   prices for at least 1 category
+-   convert to readable format
+-   prices should be numeric format (without any other letters or symbols)
+-   check if prices are reasonable
+
+```{r}
+url_mtb = "https://www.rosebikes.com/bikes/mtb"
+html_mtb = url_mtb %>% 
+          read_html()
+html_mtb
+```
+
+```{r}
+name_tbl = html_mtb %>% 
+            html_nodes("h4.basic-headline__title") %>% 
+            html_text() #%>% 
+            # Extrag all digits between " " and ".\n" The "\" have to be escaped
+            # You can use Look ahead "<=" and Look behind "?=" for this
+            #stringr::str_extract("(?<= )[0-9]*(?=\\.\\n)")%>% 
+            # Make all values numeric
+            #as.numeric()
+category_bike = html_mtb %>% html_nodes("h1.basic-headline__title") %>% html_text()
+name_tbl
+```
+
+```{r}
+tibble(name_tbl, category_bike)
+```
+
+```{r}
+price_tbl = html_mtb %>% 
+            html_nodes(".catalog-category-bikes__price") %>% 
+            html_text() %>% 
+            # Extrag all digits between " " and ".\n" The "\" have to be escaped
+            # You can use Look ahead "<=" and Look behind "?=" for this
+            #stringr::str_extract("from €([0-9,]+)\\.") %>%
+            #stringr::str_remove("from €|,") %>%
+            stringr::str_remove_all("[^0-9.]") %>%
+            # Make all values numeric
+            as.numeric()
+
+tibble(price_tbl)
+```
+
+```{r}
+final_tbl = dplyr::bind_cols(tibble(category_bike), tibble(name_tbl), tibble(price_tbl))
+kable(final_tbl)
+```

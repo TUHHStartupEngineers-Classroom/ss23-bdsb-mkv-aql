@@ -4,35 +4,35 @@
     "href": "content/01_journal/01_tidyverse.html",
     "title": "Tidyverse",
     "section": "",
-    "text": "with eval: true\n\nlibrary(readxl)\nlibrary(lubridate)\n\n#&gt; \n#&gt; Attache Paket: 'lubridate'\n\n\n#&gt; Die folgenden Objekte sind maskiert von 'package:base':\n#&gt; \n#&gt;     date, intersect, setdiff, union\n\nlibrary(tidyverse)\n\n#&gt; ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──\n\n\n#&gt; ✔ ggplot2 3.3.5     ✔ purrr   0.3.4\n#&gt; ✔ tibble  3.1.6     ✔ dplyr   1.0.8\n#&gt; ✔ tidyr   1.2.0     ✔ stringr 1.4.0\n#&gt; ✔ readr   2.1.2     ✔ forcats 0.5.1\n\n\n#&gt; ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n#&gt; ✖ lubridate::as.difftime() masks base::as.difftime()\n#&gt; ✖ lubridate::date()        masks base::date()\n#&gt; ✖ dplyr::filter()          masks stats::filter()\n#&gt; ✖ lubridate::intersect()   masks base::intersect()\n#&gt; ✖ dplyr::lag()             masks stats::lag()\n#&gt; ✖ lubridate::setdiff()     masks base::setdiff()\n#&gt; ✖ lubridate::union()       masks base::union()\n\nlibrary(readr)\nlibrary(ggplot2)\n\n\n\n\n\nbikes_tbl = read_excel(\"ds_data/ds_data/01_bike_sales/01_raw_data/bikes.xlsx\")\norderlines_tbl = read_excel(\"ds_data/ds_data/01_bike_sales/01_raw_data/orderlines.xlsx\")\n\n#&gt; New names:\n#&gt; • `` -&gt; `...1`\n\nbikeshops_tbl = read_excel(\"ds_data/ds_data/01_bike_sales/01_raw_data/bikeshops.xlsx\")\n\n\n\n\n\nhead(bikes_tbl, n=5)\n\n\n\n  \n\n\nhead(orderlines_tbl, n=5)\n\n\n\n  \n\n\nhead(bikeshops_tbl, n=5)\n\n\n\n  \n\n\n\n\n\n\n\nproduct.id from orderlines.xlsx are the same as bike.id from bikes.xlsx\nTherefore they are combined (both dataset share product.id)\nCombining customer.id from orderlines.xlsx and bikeshop.id from bikeshops.xlsx\nBecause the bikeshops (middle man) are buying and selling to customers, therefore they are the customer of the supplier (Seller)\n\n\ndplyr::left_join(orderlines_tbl, bikes_tbl, by = c(\"product.id\" = \"bike.id\"))\n\n\n\n  \n\n\n\n\nbike_orderlines_joined_tbl = orderlines_tbl %&gt;%\n    dplyr::left_join(bikes_tbl, by = c(\"product.id\" = \"bike.id\")) %&gt;% \n    dplyr::left_join(bikeshops_tbl, by = c(\"customer.id\" = \"bikeshop.id\"))\n\nhead(bike_orderlines_joined_tbl, n = 5)\n\n\n\n  \n\n\n\n\nbike_orderlines_wrangled_tbl = bike_orderlines_joined_tbl %&gt;%\n    separate(col = category,\n            into = c(\"category.1\", \"category.2\", \"category.3\"),\n            sep = \" - \") %&gt;%\n    mutate(total.price = price * quantity) %&gt;%\n    dplyr::select(-...1, -gender) %&gt;%\n    dplyr::select(-ends_with(\".id\")) %&gt;%\n    bind_cols(bike_orderlines_joined_tbl %&gt;% dplyr::select(order.id)) %&gt;%\n    dplyr::select(order.id, contains(\"order\"), contains(\"model\"), contains(\"category\"),\n          price, quantity, total.price, everything()) %&gt;%\n    rename(bikeshop = name) %&gt;%\n    set_names(names(.) %&gt;% str_replace_all(\"\\\\.\", \"_\"))"
+    "text": "Note\n\n\n\nMost of my notes of studying this chapter is done in ‘r-tidyverse.ipynb’ (see workspace content). Just in case it is necessary to show it."
   },
   {
     "objectID": "content/01_journal/01_tidyverse.html#libraries",
     "href": "content/01_journal/01_tidyverse.html#libraries",
     "title": "Tidyverse",
-    "section": "",
-    "text": "with eval: true\n\nlibrary(readxl)\nlibrary(lubridate)\n\n#&gt; \n#&gt; Attache Paket: 'lubridate'\n\n\n#&gt; Die folgenden Objekte sind maskiert von 'package:base':\n#&gt; \n#&gt;     date, intersect, setdiff, union\n\nlibrary(tidyverse)\n\n#&gt; ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──\n\n\n#&gt; ✔ ggplot2 3.3.5     ✔ purrr   0.3.4\n#&gt; ✔ tibble  3.1.6     ✔ dplyr   1.0.8\n#&gt; ✔ tidyr   1.2.0     ✔ stringr 1.4.0\n#&gt; ✔ readr   2.1.2     ✔ forcats 0.5.1\n\n\n#&gt; ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n#&gt; ✖ lubridate::as.difftime() masks base::as.difftime()\n#&gt; ✖ lubridate::date()        masks base::date()\n#&gt; ✖ dplyr::filter()          masks stats::filter()\n#&gt; ✖ lubridate::intersect()   masks base::intersect()\n#&gt; ✖ dplyr::lag()             masks stats::lag()\n#&gt; ✖ lubridate::setdiff()     masks base::setdiff()\n#&gt; ✖ lubridate::union()       masks base::union()\n\nlibrary(readr)\nlibrary(ggplot2)"
+    "section": "1.1 Libraries",
+    "text": "1.1 Libraries\n\nlibrary(readxl)\nlibrary(lubridate)\n\n#&gt; \n#&gt; Attache Paket: 'lubridate'\n\n\n#&gt; Die folgenden Objekte sind maskiert von 'package:base':\n#&gt; \n#&gt;     date, intersect, setdiff, union\n\nlibrary(tidyverse)\n\n#&gt; ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──\n\n\n#&gt; ✔ ggplot2 3.3.5     ✔ purrr   0.3.4\n#&gt; ✔ tibble  3.1.6     ✔ dplyr   1.0.8\n#&gt; ✔ tidyr   1.2.0     ✔ stringr 1.4.0\n#&gt; ✔ readr   2.1.2     ✔ forcats 0.5.1\n\n\n#&gt; ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n#&gt; ✖ lubridate::as.difftime() masks base::as.difftime()\n#&gt; ✖ lubridate::date()        masks base::date()\n#&gt; ✖ dplyr::filter()          masks stats::filter()\n#&gt; ✖ lubridate::intersect()   masks base::intersect()\n#&gt; ✖ dplyr::lag()             masks stats::lag()\n#&gt; ✖ lubridate::setdiff()     masks base::setdiff()\n#&gt; ✖ lubridate::union()       masks base::union()\n\nlibrary(readr)\nlibrary(ggplot2)"
   },
   {
     "objectID": "content/01_journal/01_tidyverse.html#data-imports",
     "href": "content/01_journal/01_tidyverse.html#data-imports",
     "title": "Tidyverse",
-    "section": "",
-    "text": "bikes_tbl = read_excel(\"ds_data/ds_data/01_bike_sales/01_raw_data/bikes.xlsx\")\norderlines_tbl = read_excel(\"ds_data/ds_data/01_bike_sales/01_raw_data/orderlines.xlsx\")\n\n#&gt; New names:\n#&gt; • `` -&gt; `...1`\n\nbikeshops_tbl = read_excel(\"ds_data/ds_data/01_bike_sales/01_raw_data/bikeshops.xlsx\")"
+    "section": "1.2 Data imports",
+    "text": "1.2 Data imports\n\nbikes_tbl = read_excel(\"ds_data/ds_data/01_bike_sales/01_raw_data/bikes.xlsx\")\norderlines_tbl = read_excel(\"ds_data/ds_data/01_bike_sales/01_raw_data/orderlines.xlsx\")\n\n#&gt; New names:\n#&gt; • `` -&gt; `...1`\n\nbikeshops_tbl = read_excel(\"ds_data/ds_data/01_bike_sales/01_raw_data/bikeshops.xlsx\")"
   },
   {
     "objectID": "content/01_journal/01_tidyverse.html#examine",
     "href": "content/01_journal/01_tidyverse.html#examine",
     "title": "Tidyverse",
-    "section": "",
-    "text": "head(bikes_tbl, n=5)\n\n\n\n  \n\n\nhead(orderlines_tbl, n=5)\n\n\n\n  \n\n\nhead(bikeshops_tbl, n=5)"
+    "section": "1.3 Examine",
+    "text": "1.3 Examine\n\nhead(bikes_tbl, n=5)\n\n\n\n  \n\n\nhead(orderlines_tbl, n=5)\n\n\n\n  \n\n\nhead(bikeshops_tbl, n=5)"
   },
   {
     "objectID": "content/01_journal/01_tidyverse.html#data-manipulation-and-cleaning",
     "href": "content/01_journal/01_tidyverse.html#data-manipulation-and-cleaning",
     "title": "Tidyverse",
-    "section": "",
-    "text": "product.id from orderlines.xlsx are the same as bike.id from bikes.xlsx\nTherefore they are combined (both dataset share product.id)\nCombining customer.id from orderlines.xlsx and bikeshop.id from bikeshops.xlsx\nBecause the bikeshops (middle man) are buying and selling to customers, therefore they are the customer of the supplier (Seller)\n\n\ndplyr::left_join(orderlines_tbl, bikes_tbl, by = c(\"product.id\" = \"bike.id\"))\n\n\n\n  \n\n\n\n\nbike_orderlines_joined_tbl = orderlines_tbl %&gt;%\n    dplyr::left_join(bikes_tbl, by = c(\"product.id\" = \"bike.id\")) %&gt;% \n    dplyr::left_join(bikeshops_tbl, by = c(\"customer.id\" = \"bikeshop.id\"))\n\nhead(bike_orderlines_joined_tbl, n = 5)\n\n\n\n  \n\n\n\n\nbike_orderlines_wrangled_tbl = bike_orderlines_joined_tbl %&gt;%\n    separate(col = category,\n            into = c(\"category.1\", \"category.2\", \"category.3\"),\n            sep = \" - \") %&gt;%\n    mutate(total.price = price * quantity) %&gt;%\n    dplyr::select(-...1, -gender) %&gt;%\n    dplyr::select(-ends_with(\".id\")) %&gt;%\n    bind_cols(bike_orderlines_joined_tbl %&gt;% dplyr::select(order.id)) %&gt;%\n    dplyr::select(order.id, contains(\"order\"), contains(\"model\"), contains(\"category\"),\n          price, quantity, total.price, everything()) %&gt;%\n    rename(bikeshop = name) %&gt;%\n    set_names(names(.) %&gt;% str_replace_all(\"\\\\.\", \"_\"))"
+    "section": "1.4 Data Manipulation and cleaning",
+    "text": "1.4 Data Manipulation and cleaning\n\nproduct.id from orderlines.xlsx are the same as bike.id from bikes.xlsx\nTherefore they are combined (both dataset share product.id)\nCombining customer.id from orderlines.xlsx and bikeshop.id from bikeshops.xlsx\nBecause the bikeshops (middle man) are buying and selling to customers, therefore they are the customer of the supplier (Seller)\n\n\ndplyr::left_join(orderlines_tbl, bikes_tbl, by = c(\"product.id\" = \"bike.id\"))\n\n\n\n  \n\n\n\n\nbike_orderlines_joined_tbl = orderlines_tbl %&gt;%\n    dplyr::left_join(bikes_tbl, by = c(\"product.id\" = \"bike.id\")) %&gt;% \n    dplyr::left_join(bikeshops_tbl, by = c(\"customer.id\" = \"bikeshop.id\"))\n\nhead(bike_orderlines_joined_tbl, n = 5)\n\n\n\n  \n\n\n\n\nbike_orderlines_wrangled_tbl = bike_orderlines_joined_tbl %&gt;%\n    separate(col = category,\n            into = c(\"category.1\", \"category.2\", \"category.3\"),\n            sep = \" - \") %&gt;%\n    mutate(total.price = price * quantity) %&gt;%\n    dplyr::select(-...1, -gender) %&gt;%\n    dplyr::select(-ends_with(\".id\")) %&gt;%\n    bind_cols(bike_orderlines_joined_tbl %&gt;% dplyr::select(order.id)) %&gt;%\n    dplyr::select(order.id, contains(\"order\"), contains(\"model\"), contains(\"category\"),\n          price, quantity, total.price, everything()) %&gt;%\n    rename(bikeshop = name) %&gt;%\n    set_names(names(.) %&gt;% str_replace_all(\"\\\\.\", \"_\"))"
   },
   {
     "objectID": "content/01_journal/01_tidyverse.html#analyse-sales-by-state-with-bar-plot",
@@ -53,7 +53,56 @@
     "href": "content/01_journal/02_data_acquisition.html",
     "title": "Data Acquisition",
     "section": "",
-    "text": "Note\n\n\n\nYou can delete everything in here and start fresh."
+    "text": "Note\n\n\n\nMost of my notes of studying this chapter is done in ‘r-data-acquisition.ipynb’ (see workspace content). Just in case it is necessary to show it."
+  },
+  {
+    "objectID": "content/01_journal/02_data_acquisition.html#libraries",
+    "href": "content/01_journal/02_data_acquisition.html#libraries",
+    "title": "Data Acquisition",
+    "section": "1.1 Libraries",
+    "text": "1.1 Libraries\nJust simply get every library\n\nlibrary(readxl)\nlibrary(lubridate)\n\n#&gt; \n#&gt; Attache Paket: 'lubridate'\n\n\n#&gt; Die folgenden Objekte sind maskiert von 'package:base':\n#&gt; \n#&gt;     date, intersect, setdiff, union\n\nlibrary(tidyverse)\n\n#&gt; ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──\n\n\n#&gt; ✔ ggplot2 3.3.5     ✔ purrr   0.3.4\n#&gt; ✔ tibble  3.1.6     ✔ dplyr   1.0.8\n#&gt; ✔ tidyr   1.2.0     ✔ stringr 1.4.0\n#&gt; ✔ readr   2.1.2     ✔ forcats 0.5.1\n\n\n#&gt; ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n#&gt; ✖ lubridate::as.difftime() masks base::as.difftime()\n#&gt; ✖ lubridate::date()        masks base::date()\n#&gt; ✖ dplyr::filter()          masks stats::filter()\n#&gt; ✖ lubridate::intersect()   masks base::intersect()\n#&gt; ✖ dplyr::lag()             masks stats::lag()\n#&gt; ✖ lubridate::setdiff()     masks base::setdiff()\n#&gt; ✖ lubridate::union()       masks base::union()\n\nlibrary(readr)\nlibrary(ggplot2)\nlibrary(knitr)\nlibrary(RSQLite)\n\n#&gt; Warning: Paket 'RSQLite' wurde unter R Version 4.2.3 erstellt\n\nlibrary(rvest)     # HTML Hacking & Web Scraping\n\n#&gt; \n#&gt; Attache Paket: 'rvest'\n\n\n#&gt; Das folgende Objekt ist maskiert 'package:readr':\n#&gt; \n#&gt;     guess_encoding\n\nlibrary(xopen)     # Quickly opening URLs\n\n#&gt; Warning: Paket 'xopen' wurde unter R Version 4.2.3 erstellt\n\nlibrary(jsonlite)  # converts JSON files to R objects\n\n#&gt; \n#&gt; Attache Paket: 'jsonlite'\n\n\n#&gt; Das folgende Objekt ist maskiert 'package:purrr':\n#&gt; \n#&gt;     flatten\n\nlibrary(glue)      # concatenate strings\nlibrary(stringi)   # character string/text processing\nlibrary(httr)\nlibrary(stringr)"
+  },
+  {
+    "objectID": "content/01_journal/02_data_acquisition.html#get-a-free-api",
+    "href": "content/01_journal/02_data_acquisition.html#get-a-free-api",
+    "title": "Data Acquisition",
+    "section": "2.1 Get a free API",
+    "text": "2.1 Get a free API\n\napi_url = \"http://universities.hipolabs.com/search?country=germany\""
+  },
+  {
+    "objectID": "content/01_journal/02_data_acquisition.html#import-data",
+    "href": "content/01_journal/02_data_acquisition.html#import-data",
+    "title": "Data Acquisition",
+    "section": "2.2 Import data",
+    "text": "2.2 Import data\n\nresponse = GET(api_url)\ndata = content(response, as = \"text\")\n\n#&gt; No encoding supplied: defaulting to UTF-8.\n\ndata_list = fromJSON(data)"
+  },
+  {
+    "objectID": "content/01_journal/02_data_acquisition.html#examine",
+    "href": "content/01_journal/02_data_acquisition.html#examine",
+    "title": "Data Acquisition",
+    "section": "2.3 Examine",
+    "text": "2.3 Examine\n\ntibble(data_list)"
+  },
+  {
+    "objectID": "content/01_journal/02_data_acquisition.html#cleaning-data",
+    "href": "content/01_journal/02_data_acquisition.html#cleaning-data",
+    "title": "Data Acquisition",
+    "section": "2.4 Cleaning Data",
+    "text": "2.4 Cleaning Data\n\nChange every “-” to “_”\n\ncleaner_data_list = tibble(data_list) %&gt;% \n    dplyr::select(everything()) %&gt;%\n    set_names(names(.) %&gt;% str_replace_all(\"\\\\-\", \"_\")) %&gt;% \n    dplyr::mutate(name = gsub(\"-\", \" \", name))\n\n\n\nSee result\n\ncleaner_data_list\n\n\n\n  \n\n\n\n\n\nDelete unecesarry columns and reduce row to 20, because there is too much, then see result\n\nsmaller_cleaner_data_list = head(cleaner_data_list, n= 20) %&gt;% \n    dplyr::select(-(alpha_two_code), -(state_province))\n\nsmaller_cleaner_data_list\n\n\n\n  \n\n\n\n\n\nCount the number of words in the name column\n\n#word_counts &lt;- str_count(data_list$name, \"\\\\S+\")\n#word_counts = sapply(data_list$name, function(name) length(strsplit(name, \"[\\\\s-]+\")[[1]]))\n\nword_counts = sapply(smaller_cleaner_data_list$name, function(name) str_count(name, \"\\\\S+\"))\n\n\n\nInsert result into table\n\nsmaller_cleaner_data_list$simple_name = word_counts\n\n\n\nSee current result\n\ntibble(smaller_cleaner_data_list)"
+  },
+  {
+    "objectID": "content/01_journal/02_data_acquisition.html#plot-readable-table",
+    "href": "content/01_journal/02_data_acquisition.html#plot-readable-table",
+    "title": "Data Acquisition",
+    "section": "2.5 Plot readable table",
+    "text": "2.5 Plot readable table\n\nsimplicity_of_name = smaller_cleaner_data_list %&gt;%\n    dplyr::select(name, simple_name)\n\nkable(simplicity_of_name)\n\n\n\n\n\n\n\n\nname\nsimple_name\n\n\n\n\nAKAD Hochschulen für Berufstätige, Fachhochschule Leipzig\n6\n\n\nHochschule für Berufstätige Rendsburg\n4\n\n\nAlice Salomon Fachhochschule für Sozialarbeit und Sozialpädagogik Berlin\n8\n\n\nAugustana Hochschule Neuendettelsau\n3\n\n\nKirchliche Hochschule Bethel\n3\n\n\nBiTS Business and Information Technology School gGmbH\n7\n\n\nCologne Business School\n3\n\n\nCODE University of Applied Sciences Berlin\n6\n\n\nDeutsche Hochschule für Verwaltungswissenschaften Speyer\n5\n\n\nDIPLOMA Fachhochschule Ölsnitz/Vogtland\n3\n\n\nFachhochschule Nordhessen\n2\n\n\nDeutsche Sporthochschule Köln\n3\n\n\nE.A.P. Europäische Wirtschaftshochschule Berlin\n4\n\n\nEuropäische Betriebswirtschafts Akademie\n3\n\n\nEuropean Business School Schloß Reichartshausen\n5\n\n\nEuropean College of Liberal Arts\n5\n\n\nEvangelische Fachhochschule Rheinland Westfalen Lippe\n5\n\n\nEvangelische Fachhochschule Darmstadt\n3\n\n\nEvangelische Fachhochschule Freiburg, Hochschule für Soziale Arbeit, Diakonie und Religionspädagogik\n10\n\n\nEvangelische Fachhochschule Hannover\n3\n\n\n\n\n\n\ndev.new(width = 750, height = 530, unit = \"px\")\nplot(1:15)"
+  },
+  {
+    "objectID": "content/01_journal/02_data_acquisition.html#plot-graph",
+    "href": "content/01_journal/02_data_acquisition.html#plot-graph",
+    "title": "Data Acquisition",
+    "section": "2.6 Plot graph",
+    "text": "2.6 Plot graph\n\n\n\n\n\n\nNote\n\n\n\nThe graph plotting works fine in other notebook platforms, but in RStudio it seems very squished. Therefore the original image is attached below after the code’s plot.\n\n\n\nsimplicity_of_name %&gt;%\n\n    # Setup canvas with the columns year (x-axis) and sales (y-axis)\n    ggplot(aes(x = name, y = simple_name)) +\n\n    # Geometries\n    geom_col(fill = \"#2DC6D6\") + # Use geom_col for a bar plot\n    geom_label(aes(label = simple_name)) + # Adding labels to the bars\n\n    # Formatting\n    # scale_y_continuous(labels = scales::dollar) + # Change the y-axis. \n    # Again, we have to adjust it for euro values\n    theme(axis.text.x = element_text(angle = 30, hjust = 1)) +\n\n    labs(\n        title    = \"Simplicity of university names\",\n        subtitle = \"Less is simpler\",\n        x = \"\", # Override defaults for x and y\n        y = \"Complexity of names\"\n    )\n\n\n\n\n\n\n\n\n\n\n\nOriginal plot"
   },
   {
     "objectID": "content/01_journal/03_data_wrangling.html",

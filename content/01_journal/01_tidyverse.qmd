@@ -3,9 +3,12 @@ title: "Tidyverse"
 author: "Agam Safaruddin"
 ---
 
+::: callout-note
+Most of my notes of studying this chapter is done in 'r-tidyverse.ipynb' (see workspace content). Just in case it is necessary to show it. 
+:::
+
 # Requirements
 ## Libraries
-with eval: true
 ```{r}
 library(readxl)
 library(lubridate)
