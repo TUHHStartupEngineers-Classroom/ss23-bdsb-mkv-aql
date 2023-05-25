@@ -207,7 +207,35 @@
     "href": "content/01_journal/04_data_visualization.html",
     "title": "Data Visualization",
     "section": "",
-    "text": "Note\n\n\n\nYou can delete everything in here and start fresh."
+    "text": "Note\n\n\n\nMost of my notes of studying this chapter is done in ‘r-data-visualization.ipynb’ (see workspace content). Just in case it is necessary to show it."
+  },
+  {
+    "objectID": "content/01_journal/04_data_visualization.html#libraries",
+    "href": "content/01_journal/04_data_visualization.html#libraries",
+    "title": "Data Visualization",
+    "section": "1.1 Libraries",
+    "text": "1.1 Libraries\nJust simply get every library\n\nlibrary(tidyverse)\n\n#&gt; ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──\n\n\n#&gt; ✔ ggplot2 3.3.5     ✔ purrr   0.3.4\n#&gt; ✔ tibble  3.1.6     ✔ dplyr   1.0.8\n#&gt; ✔ tidyr   1.2.0     ✔ stringr 1.4.0\n#&gt; ✔ readr   2.1.2     ✔ forcats 0.5.1\n\n\n#&gt; ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n#&gt; ✖ dplyr::filter() masks stats::filter()\n#&gt; ✖ dplyr::lag()    masks stats::lag()\n\nlibrary(readr)\nlibrary(ggplot2)\nlibrary(lubridate)\n\n#&gt; \n#&gt; Attache Paket: 'lubridate'\n\n\n#&gt; Die folgenden Objekte sind maskiert von 'package:base':\n#&gt; \n#&gt;     date, intersect, setdiff, union\n\nlibrary(readxl)\nlibrary(knitr)\nlibrary(RSQLite)\n\n#&gt; Warning: Paket 'RSQLite' wurde unter R Version 4.2.3 erstellt\n\nlibrary(data.table)\n\n#&gt; \n#&gt; Attache Paket: 'data.table'\n\n\n#&gt; Die folgenden Objekte sind maskiert von 'package:lubridate':\n#&gt; \n#&gt;     hour, isoweek, mday, minute, month, quarter, second, wday, week,\n#&gt;     yday, year\n\n\n#&gt; Die folgenden Objekte sind maskiert von 'package:dplyr':\n#&gt; \n#&gt;     between, first, last\n\n\n#&gt; Das folgende Objekt ist maskiert 'package:purrr':\n#&gt; \n#&gt;     transpose\n\nlibrary(scales)\n\n#&gt; \n#&gt; Attache Paket: 'scales'\n\n\n#&gt; Das folgende Objekt ist maskiert 'package:purrr':\n#&gt; \n#&gt;     discard\n\n\n#&gt; Das folgende Objekt ist maskiert 'package:readr':\n#&gt; \n#&gt;     col_factor\n\nlibrary(ggrepel)"
+  },
+  {
+    "objectID": "content/01_journal/04_data_visualization.html#import-data",
+    "href": "content/01_journal/04_data_visualization.html#import-data",
+    "title": "Data Visualization",
+    "section": "1.2 IMport data",
+    "text": "1.2 IMport data\n\nlibrary(tidyverse)\ncovid_data_tbl &lt;- read_csv(\"https://covid.ourworldindata.org/data/owid-covid-data.csv\")\n\n#&gt; Rows: 313070 Columns: 67\n#&gt; ── Column specification ────────────────────────────────────────────────────────\n#&gt; Delimiter: \",\"\n#&gt; chr   (4): iso_code, continent, location, tests_units\n#&gt; dbl  (62): total_cases, new_cases, new_cases_smoothed, total_deaths, new_dea...\n#&gt; date  (1): date\n#&gt; \n#&gt; ℹ Use `spec()` to retrieve the full column specification for this data.\n#&gt; ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message."
+  },
+  {
+    "objectID": "content/01_journal/04_data_visualization.html#data-manipulation",
+    "href": "content/01_journal/04_data_visualization.html#data-manipulation",
+    "title": "Data Visualization",
+    "section": "2.1 Data Manipulation",
+    "text": "2.1 Data Manipulation\n\ncovid_data_dt = data.table(covid_data_tbl)\nclass(covid_data_dt)\n\n#&gt; [1] \"data.table\" \"data.frame\"\n\n#covid_data_dt\n\n\nConvert date to tb\n\ncovid_data_dt[, date := as.Date(date)]\n\n\n\nextract year and month\n\ncovid_data_dt[, year_month := format(date, \"%Y-%m\")]\n\n\n\nsee result, and calculate total new cases for each month\n\ncovid_data_new_cases_per_month_dt = covid_data_dt[!is.na(new_cases), .(new_cases_per_month = sum(new_cases)), by = .(year_month, location)]\ncovid_data_new_cases_per_month_dt\n\n\n\n  \n\n\n\n\n\nfilter locations\n\nchosen_locations = c(\"Germany\", \"United Kingdom\", \"France\", \"Spain\", \"United States\")\n\ncovid_data_new_cases_per_month_per_chosen_locations_dt = covid_data_new_cases_per_month_dt[location %in% chosen_locations]\n\n#covid_data_new_cases_per_month_per_chosen_locations_dt \ncovid_data_new_cases_per_month_per_chosen_locations_dt %&gt;% glimpse()\n\n#&gt; Rows: 205\n#&gt; Columns: 3\n#&gt; $ year_month          &lt;chr&gt; \"2020-01\", \"2020-02\", \"2020-03\", \"2020-04\", \"2020-…\n#&gt; $ location            &lt;chr&gt; \"France\", \"France\", \"France\", \"France\", \"France\", …\n#&gt; $ new_cases_per_month &lt;dbl&gt; 6, 51, 43920, 83089, 21170, 11138, 20620, 111684, …\n\n\n\n\ncumulative calculation\n\n#covid_data_new_cases_per_month_per_chosen_locations_dt[, year_month := as.Date(year_month, format = \"%Y-%m\")]\ncovid_data_new_cases_per_month_per_chosen_locations_dt[, year_month := as.character(year_month)]\ncovid_data_new_cases_per_month_per_chosen_locations_dt[, cumulative_cases := cumsum(new_cases_per_month), by = .(location)]\n\n\n\nGet final cumulative number\n\nlast_value = covid_data_new_cases_per_month_per_chosen_locations_dt %&gt;%\n  group_by(location) %&gt;%\n  filter(year_month == max(year_month)) %&gt;%\n  ungroup()"
+  },
+  {
+    "objectID": "content/01_journal/04_data_visualization.html#plot-line-graph",
+    "href": "content/01_journal/04_data_visualization.html#plot-line-graph",
+    "title": "Data Visualization",
+    "section": "2.2 Plot line graph",
+    "text": "2.2 Plot line graph\n\nggplot(covid_data_new_cases_per_month_per_chosen_locations_dt, aes(x = year_month, y = cumulative_cases, color = location, group = location)) +\n  geom_line() +\n\n#geom_text(data = last_value, aes(label = cumulative_cases), hjust = 1, vjust = 1, color = \"blue\")+\ngeom_label_repel(data = last_value, aes(label = cumulative_cases), show.legend = TRUE, nudge_x = 0.01, nudge_y = 5000000, direction = \"y\") +\ntheme_dark() +\n#theme_minimal() +\n  #scale_x_date(date_labels = \"%Y-%m\", date_breaks = \"1 month\") +\ntheme(axis.text.x = element_text(angle = 45, hjust = 1, color = \"black\"),\n        plot.title = element_text(face = \"bold\", color = \"black\"),\n        plot.caption = element_text(face = \"bold.italic\", color = \"black\"),\n        legend.position = \"bottom\",\n     legend.text = element_text(color = \"black\"),\n     legend.title = element_text(color = \"black\")) +\n#theme_minimal() +\n\n  labs(\n    title = \"Covid 19 confirm cases worldwdie\",\n    subtitle = \"As of 19.04.2022\",\n    x = \"Date\",\n    y = \"Cumulative Cases\",\n    color = \"Country\"\n      #show.legend = TRUE\n  ) +\n    scale_y_continuous(labels = function(x) paste0(x / 500000, \"M\"))"
   },
   {
     "objectID": "content/01_journal/Test_Training.html",

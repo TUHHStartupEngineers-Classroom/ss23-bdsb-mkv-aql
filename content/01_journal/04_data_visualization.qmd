@@ -1,8 +1,129 @@
 ---
 title: "Data Visualization"
-author: "Joschka Schwarz"
+author: "Agam Safaruddin"
 ---
 
 ::: callout-note
-You can delete everything in here and start fresh.
+Most of my notes of studying this chapter is done in 'r-data-visualization.ipynb' (see workspace content). Just in case it is necessary to show it.
 :::
+
+# Requirements
+
+## Libraries
+
+Just simply get every library
+
+```{r}
+library(tidyverse)
+library(readr)
+library(ggplot2)
+library(lubridate)
+library(readxl)
+library(knitr)
+library(RSQLite)
+library(data.table)
+library(scales)
+library(ggrepel)
+```
+
+## IMport data
+
+```{r}
+library(tidyverse)
+covid_data_tbl <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv")
+```
+
+# Challenge 1
+
+-   Goal: Map the time course of the cumulative Covid-19 cases
+
+```{r}
+covid_data_tbl %>% glimpse()
+```
+
+## Data Manipulation
+
+```{r}
+covid_data_dt = data.table(covid_data_tbl)
+class(covid_data_dt)
+#covid_data_dt
+```
+
+### Convert date to tb
+
+```{r}
+covid_data_dt[, date := as.Date(date)]
+```
+
+### extract year and month
+
+```{r}
+covid_data_dt[, year_month := format(date, "%Y-%m")]
+```
+
+### see result, and calculate total new cases for each month
+
+```{r}
+covid_data_new_cases_per_month_dt = covid_data_dt[!is.na(new_cases), .(new_cases_per_month = sum(new_cases)), by = .(year_month, location)]
+covid_data_new_cases_per_month_dt
+```
+
+### filter locations
+
+```{r}
+chosen_locations = c("Germany", "United Kingdom", "France", "Spain", "United States")
+
+covid_data_new_cases_per_month_per_chosen_locations_dt = covid_data_new_cases_per_month_dt[location %in% chosen_locations]
+
+#covid_data_new_cases_per_month_per_chosen_locations_dt 
+covid_data_new_cases_per_month_per_chosen_locations_dt %>% glimpse()
+```
+
+### cumulative calculation
+
+```{r}
+#covid_data_new_cases_per_month_per_chosen_locations_dt[, year_month := as.Date(year_month, format = "%Y-%m")]
+covid_data_new_cases_per_month_per_chosen_locations_dt[, year_month := as.character(year_month)]
+covid_data_new_cases_per_month_per_chosen_locations_dt[, cumulative_cases := cumsum(new_cases_per_month), by = .(location)]
+```
+
+### Get final cumulative number
+
+```{r}
+last_value = covid_data_new_cases_per_month_per_chosen_locations_dt %>%
+  group_by(location) %>%
+  filter(year_month == max(year_month)) %>%
+  ungroup()
+```
+
+## Plot line graph
+
+```{r}
+ggplot(covid_data_new_cases_per_month_per_chosen_locations_dt, aes(x = year_month, y = cumulative_cases, color = location, group = location)) +
+  geom_line() +
+
+#geom_text(data = last_value, aes(label = cumulative_cases), hjust = 1, vjust = 1, color = "blue")+
+geom_label_repel(data = last_value, aes(label = cumulative_cases), show.legend = TRUE, nudge_x = 0.01, nudge_y = 5000000, direction = "y") +
+theme_dark() +
+#theme_minimal() +
+  #scale_x_date(date_labels = "%Y-%m", date_breaks = "1 month") +
+theme(axis.text.x = element_text(angle = 45, hjust = 1, color = "black"),
+        plot.title = element_text(face = "bold", color = "black"),
+        plot.caption = element_text(face = "bold.italic", color = "black"),
+        legend.position = "bottom",
+     legend.text = element_text(color = "black"),
+     legend.title = element_text(color = "black")) +
+#theme_minimal() +
+
+  labs(
+    title = "Covid 19 confirm cases worldwdie",
+    subtitle = "As of 19.04.2022",
+    x = "Date",
+    y = "Cumulative Cases",
+    color = "Country"
+      #show.legend = TRUE
+  ) +
+    scale_y_continuous(labels = function(x) paste0(x / 500000, "M")) 
+                    
+
+```
